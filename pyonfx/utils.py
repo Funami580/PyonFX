@@ -233,11 +233,11 @@ class ColorUtility:
         * Every color-tag has to be in the format of ``c&Hxxxxxx&``, do not forget the last &;
         * You can put color changes without using transformations, like ``{\\1c&HFFFFFF&\\3c&H000000&}Test``, but those will be interpreted as ``{\\t(0,0,\\1c&HFFFFFF&\\3c&H000000&)}Test``;
         * For an example of how color changes should be put in your lines, check `this <https://github.com/CoffeeStraw/PyonFX/blob/master/examples/2%20-%20Beginner/in2.ass#L34-L36>`_.
-        
+
         Also, it is important to remember that **color changes in your lines are treated as if they were continuous**.
-        
+
         For example, let's assume we have two lines:
-        
+
         #. ``{\\1c&HFFFFFF&\\t(100,150,\\1c&H000000&)}Line1``, starting at 0ms, ending at 100ms;
         #. ``{}Line2``, starting at 100ms, ending at 200ms.
 

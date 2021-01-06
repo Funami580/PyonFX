@@ -1,6 +1,4 @@
 import os
-import sys
-import pytest_check as check
 from pyonfx import *
 
 # Get ass path
@@ -10,9 +8,6 @@ path_ass = os.path.join(dir_path, "Ass", "in.ass")
 # Extract infos from ass file
 io = Ass(path_ass)
 meta, styles, lines = io.get_data()
-
-# Config
-max_deviation = 3
 
 
 def test_coloralpha():

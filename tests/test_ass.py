@@ -1,5 +1,4 @@
 import os
-import sys
 import pytest_check as check
 from pyonfx import *
 

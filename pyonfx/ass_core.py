@@ -677,7 +677,7 @@ class Ass:
                             tmp = {
                                 # Note that we're removing possibles '}{' caused by consecutive tags
                                 "tags": line.raw_text[
-                                    tag.start() + 1 : tag.end() - 1
+                                    tag.start() + 1: tag.end() - 1
                                 ].replace("}{", ""),
                                 "text": line.raw_text[
                                     tag.end(): (next_tag.start() if next_tag else None)

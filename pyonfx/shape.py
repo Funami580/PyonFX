@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see http://www.gnu.org/licenses/.
 
-import re
 import math
 from pyquaternion import Quaternion
 from inspect import signature
@@ -197,7 +196,7 @@ class Shape:
                     raise ValueError("Unexpected end of the shape")
 
                 # Convert back to string the results for later
-                cmds_and_points[i : i + 2] = (
+                cmds_and_points[i: i + 2] = (
                     Shape.format_value(x),
                     Shape.format_value(y),
                 )
@@ -223,7 +222,7 @@ class Shape:
                     raise ValueError("Unexpected end of the shape")
 
                 # Convert back to string the results for later
-                cmds_and_points[i : i + 2] = (
+                cmds_and_points[i: i + 2] = (
                     Shape.format_value(x),
                     Shape.format_value(y),
                 )

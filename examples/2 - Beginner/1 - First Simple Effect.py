@@ -4,14 +4,14 @@ As you can see, we have now filled our romaji, kanji and sub functions.
 
 Starting from the simple one, the sub function make use of leadin and leadout times for fitting line-to-line changes.
 We then construct the text of each line, giving an alignment, a position and a fad to make a soft entrance and exit.
-	(Docs: https://pyonfx.readthedocs.io/en/latest/reference/ass%20core.html#pyonfx.ass_core.Line.leadin)
+    (Docs: https://pyonfx.readthedocs.io/en/latest/reference/ass%20core.html#pyonfx.ass_core.Line.leadin)
 
 In the romaji function instead, we want to create an effect that works with syllables.
 In order to do do that, every syllable has to be one dialog line,
 so we loop through syllable entries of current line.
 Using a utility provided in Utils module, all_non_empty(), we assure
 that we will not work with blank syllables or syls with duration equals to zero.
-	(Docs: https://pyonfx.readthedocs.io/en/latest/reference/utils.html#pyonfx.utils.Utils.all_non_empty)
+    (Docs: https://pyonfx.readthedocs.io/en/latest/reference/utils.html#pyonfx.utils.Utils.all_non_empty)
 
 In a similiar fashion to what we did in the sub function, we create a leadin and a leadout using fad tag,
 then we create our first main effect by using a simple trasformation, obtaining a grow/shrink effect.
@@ -55,19 +55,19 @@ def romaji(line, l):
         l.dur = l.end_time - l.start_time
 
         l.text = (
-            "{\\an5\\pos(%.3f,%.3f)"
-            "\\t(0,%d,0.5,\\1c&HFFFFFF&\\3c&HABABAB&\\fscx125\\fscy125)"
-            "\\t(%d,%d,1.5,\\fscx100\\fscy100\\1c%s\\3c%s)}%s"
-            % (
-                syl.center,
-                syl.middle,
-                l.dur / 3,
-                l.dur / 3,
-                l.dur,
-                line.styleref.color1,
-                line.styleref.color3,
-                syl.text,
-            )
+                "{\\an5\\pos(%.3f,%.3f)"
+                "\\t(0,%d,0.5,\\1c&HFFFFFF&\\3c&HABABAB&\\fscx125\\fscy125)"
+                "\\t(%d,%d,1.5,\\fscx100\\fscy100\\1c%s\\3c%s)}%s"
+                % (
+                    syl.center,
+                    syl.middle,
+                    l.dur / 3,
+                    l.dur / 3,
+                    l.dur,
+                    line.styleref.color1,
+                    line.styleref.color3,
+                    syl.text,
+                )
         )
 
         io.write_line(l)
@@ -115,19 +115,19 @@ def kanji(line, l):
         l.dur = l.end_time - l.start_time
 
         l.text = (
-            "{\\an5\\pos(%.3f,%.3f)"
-            "\\t(0,%d,0.5,\\1c&HFFFFFF&\\3c&HABABAB&\\fscx125\\fscy125)"
-            "\\t(%d,%d,1.5,\\fscx100\\fscy100\\1c%s\\3c%s)}%s"
-            % (
-                char.center,
-                char.middle,
-                l.dur / 3,
-                l.dur / 3,
-                l.dur,
-                line.styleref.color1,
-                line.styleref.color3,
-                char.text,
-            )
+                "{\\an5\\pos(%.3f,%.3f)"
+                "\\t(0,%d,0.5,\\1c&HFFFFFF&\\3c&HABABAB&\\fscx125\\fscy125)"
+                "\\t(%d,%d,1.5,\\fscx100\\fscy100\\1c%s\\3c%s)}%s"
+                % (
+                    char.center,
+                    char.middle,
+                    l.dur / 3,
+                    l.dur / 3,
+                    l.dur,
+                    line.styleref.color1,
+                    line.styleref.color3,
+                    char.text,
+                )
         )
 
         io.write_line(l)
