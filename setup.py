@@ -18,21 +18,6 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-def get_requirements():
-    requirements = ["pyquaternion"]
-
-    if os.environ.get("READTHEDOCS") != "True":
-        requirements.extend(
-            [
-                'pywin32; sys_platform == "win32"',
-                'pycairo; sys_platform == "linux" or sys_platform == "darwin"',
-                'PyGObject; sys_platform == "linux" or sys_platform == "darwin"',
-            ]
-        )
-
-    return requirements
-
-
 setuptools.setup(
     name="pyonfx",
     url="https://github.com/CoffeeStraw/PyonFX",
@@ -43,7 +28,7 @@ setuptools.setup(
     description="An easy way to do KFX and complex typesetting based on subtitle format ASS (Advanced Substation Alpha).",
     long_description=open("README.md", encoding="utf-8").read(),
     packages=["pyonfx"],
-    install_requires=get_requirements(),
+    install_requires="pyquaternion",
     extras_require={
         "dev": ["pytest", "pytest-check", "sphinx_rtd_theme", "sphinxcontrib-napoleon"]
     },

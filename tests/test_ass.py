@@ -11,9 +11,6 @@ path_ass = os.path.join(dir_path, "Ass", "ass_core.ass")
 io = Ass(path_ass)
 meta, styles, lines = io.get_data()
 
-# Config
-max_deviation = 0.75
-
 
 def test_meta_values():
     # Tests if all the meta values are taken correctly
@@ -65,62 +62,59 @@ def test_line_values():
     check.equal(lines[11].text, "surechigau kotoba no ura ni tozasareta kokoro no kagi")
 
     # Normal style (no bold, italic and with a normal fs)
-    check.almost_equal(lines[1].width, 437.75, abs=max_deviation)
-    check.almost_equal(lines[1].height, 48.0, abs=max_deviation)
-    check.almost_equal(lines[1].ascent, 36.984375, abs=max_deviation)
-    check.almost_equal(lines[1].descent, 11.015625, abs=max_deviation)
-    if sys.platform == "win32":
-        check.equal(lines[1].internal_leading, 13.59375)
-        check.equal(lines[1].external_leading, 3.09375)
-    check.almost_equal(lines[1].x, lines[1].center, abs=max_deviation)
-    check.almost_equal(lines[1].y, lines[1].top, abs=max_deviation)
-    check.almost_equal(lines[1].left, 421.125, abs=max_deviation)
-    check.almost_equal(lines[1].center, 640.0, abs=max_deviation)
-    check.almost_equal(lines[1].right, 858.875, abs=max_deviation)
-    check.almost_equal(lines[1].top, 50.0, abs=max_deviation)
-    check.almost_equal(lines[1].middle, 74.0, abs=max_deviation)
-    check.almost_equal(lines[1].bottom, 98.0, abs=max_deviation)
+    check.equal(lines[1].width, 438.375)
+    check.equal(lines[1].height, 26.15625)
+    check.equal(lines[1].ascent, 25.8125)
+    check.equal(lines[1].descent, 0.34375)
+    check.equal(lines[1].x, lines[1].center)
+    check.equal(lines[1].y, lines[1].top)
+    check.equal(lines[1].left, 420.8125)
+    check.equal(lines[1].center, 640.0)
+    check.equal(lines[1].right, 859.1875)
+    check.equal(lines[1].top, 50.0)
+    check.equal(lines[1].middle, 74.0)
+    check.equal(lines[1].bottom, 98.0)
 
     # Bold style
-    check.almost_equal(lines[2].width, 461.609375, abs=max_deviation)
-    check.almost_equal(lines[2].height, 48.0, abs=max_deviation)
+    check.equal(lines[2].width, 463.125)
+    check.equal(lines[2].height, 26.15625)
 
     # Italic style
-    check.almost_equal(lines[3].width, 437.75, abs=max_deviation)
-    check.almost_equal(lines[3].height, 48.0, abs=max_deviation)
+    check.equal(lines[3].width, 438.375)
+    check.equal(lines[3].height, 26.15625)
 
     # Bold-italic style
-    check.almost_equal(lines[4].width, 461.609375, abs=max_deviation)
-    check.almost_equal(lines[4].height, 48.0, abs=max_deviation)
+    check.equal(lines[4].width, 463.125)
+    check.equal(lines[4].height, 26.15625)
 
     # Normal-spaced style
-    check.almost_equal(lines[5].width, 572.75, abs=max_deviation)
-    check.almost_equal(lines[5].height, 48.0, abs=max_deviation)
+    check.equal(lines[5].width, 578.375)
+    check.equal(lines[5].height, 26.15625)
 
     # Normal - fscx style
-    check.almost_equal(lines[6].width, 612.8499999999999, abs=max_deviation)
-    check.almost_equal(lines[6].height, 48.0, abs=max_deviation)
+    check.equal(lines[6].width, 613.75)
+    check.equal(lines[6].height, 26.15625)
 
     # Normal - fscy style
-    check.almost_equal(lines[7].width, 437.75, abs=max_deviation)
-    check.almost_equal(lines[7].height, 67.19999999999999, abs=max_deviation)
+    check.equal(lines[7].width, 438.375)
+    check.equal(lines[7].height, 36.609375)
 
     # Normal - Big FS
-    check.almost_equal(lines[8].width, 820.796875, abs=max_deviation)
-    check.almost_equal(lines[8].height, 90.0, abs=max_deviation)
+    check.equal(lines[8].width, 821.859375)
+    check.equal(lines[8].height, 49.03125)
 
     # Normal - Big FS - Spaced
-    check.almost_equal(lines[9].width, 1090.796875, abs=max_deviation)
-    check.almost_equal(lines[9].height, 90.0, abs=max_deviation)
+    check.equal(lines[9].width, 1101.859375)
+    check.equal(lines[9].height, 49.03125)
 
     # Bold - Text with non latin characters (kanji)
-    check.almost_equal(lines[10].width, 309.65625, abs=max_deviation)
-    check.almost_equal(lines[10].height, 48.0, abs=max_deviation)
+    check.equal(lines[10].width, 310.5)
+    check.equal(lines[10].height, 31.9375)
 
     # Bold - Text with some tags
-    check.almost_equal(lines[11].width, 941.703125, abs=max_deviation)
-    check.almost_equal(lines[11].height, 48.0, abs=max_deviation)
+    check.equal(lines[11].width, 943.6875)
+    check.equal(lines[11].height, 26.15625)
 
     # Bold - Vertical Text
-    check.almost_equal(lines[12].width, 31.546875, abs=max_deviation)
-    check.almost_equal(lines[12].height, 396.0, abs=max_deviation)
+    check.equal(lines[12].width, 31.625)
+    check.equal(lines[12].height, 279.0)

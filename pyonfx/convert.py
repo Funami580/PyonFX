@@ -176,10 +176,7 @@ class Convert:
             obj.styleref.scale_y = fscy
 
         # Obtaining font information from style and obtaining shape
-        font = Font(obj.styleref)
-        shape = font.text_to_shape(obj.text)
-        # Clearing resources to not let overflow errors take over
-        del font
+        shape = Font.text_to_shape(obj, obj.text)
 
         # Restoring values of style and returning the shape converted
         if fscx is not None:

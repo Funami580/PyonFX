@@ -21,329 +21,141 @@ to help getting informations from a specific font
 import sys
 from .shape import Shape
 
-if sys.platform == "win32":
-    import win32gui
-    import win32ui
-    import win32con
-elif (
-    sys.platform == "linux" or sys.platform == "darwin"
-) and not "sphinx" in sys.modules:
-    import cairo
-    import gi
+if "sphinx" not in sys.modules:
+    import python_ass.ass as ass
+    import python_ass.ass.renderer
+    from datetime import timedelta
 
-    gi.require_version("Pango", "1.0")
-    gi.require_version("PangoCairo", "1.0")
+    _context = ass.renderer.Context()
+    _renderer = _context.make_renderer()
+    _renderer.set_fonts(fontconfig_config="\0")
+    _track = _context.make_track()
 
-    from gi.repository import Pango, PangoCairo
-    import html
 
-# CONFIGURATION
-FONT_PRECISION = 64  # Font scale for better precision output from native font system
-LIBASS_FONTHACK = True  # Scale font data to fontsize? (no effect on windows)
-PANGO_SCALE = 1024  # The PANGO_SCALE macro represents the scale between dimensions used for Pango distances and device units.
+SCALE_FACTOR = 64
 
 
 class Font:
-    """
-    Font class definition
-    """
+    @staticmethod
+    def glyph_data(line, text):
+        from . import Line
 
-    def __init__(self, style):
-        self.family = style.fontname
-        self.bold = style.bold
-        self.italic = style.italic
-        self.underline = style.underline
-        self.strikeout = style.strikeout
-        self.size = style.fontsize
-        self.xscale = style.scale_x / 100
-        self.yscale = style.scale_y / 100
-        self.hspace = style.spacing
-        self.upscale = FONT_PRECISION
-        self.downscale = 1 / FONT_PRECISION
+        if not isinstance(line, Line):
+            raise TypeError("Expected Line object, got %s." % type(line))
 
-        if sys.platform == "win32":
-            # Create device context
-            self.dc = win32gui.CreateCompatibleDC(None)
-            # Set context coordinates mapping mode
-            win32gui.SetMapMode(self.dc, win32con.MM_TEXT)
-            # Set context backgrounds to transparent
-            win32gui.SetBkMode(self.dc, win32con.TRANSPARENT)
-            # Create font handle
-            font_spec = {
-                "height": int(self.size * self.upscale),
-                "width": 0,
-                "escapement": 0,
-                "orientation": 0,
-                "weight": win32con.FW_BOLD if self.bold else win32con.FW_NORMAL,
-                "italic": int(self.italic),
-                "underline": int(self.underline),
-                "strike out": int(self.strikeout),
-                "charset": win32con.DEFAULT_CHARSET,
-                "out precision": win32con.OUT_TT_PRECIS,
-                "clip precision": win32con.CLIP_DEFAULT_PRECIS,
-                "quality": win32con.ANTIALIASED_QUALITY,
-                "pitch and family": win32con.DEFAULT_PITCH + win32con.FF_DONTCARE,
-                "name": self.family,
-            }
-            self.pycfont = win32ui.CreateFont(font_spec)
-            win32gui.SelectObject(self.dc, self.pycfont.GetSafeHandle())
-            # Calculate metrics
-            self.metrics = win32gui.GetTextMetrics(self.dc)
-        elif sys.platform == "linux" or sys.platform == "darwin":
-            surface = cairo.ImageSurface(cairo.Format.A8, 1, 1)
+        def as_ass_text(obj, input_text):
+            alignment = fr"\an{obj.styleref.alignment}"
+            fontname = fr"\fn{obj.styleref.fontname}"
+            fontsize = fr"\fs{obj.styleref.fontsize}"
+            bold = r"\b1" if obj.styleref.bold else r""
+            italic = r"\i1" if obj.styleref.italic else r""
+            underline = r"\u1" if obj.styleref.underline else r""
+            strikeout = r"\s1" if obj.styleref.strikeout else r""
+            scale_x = fr"\fscx{obj.styleref.scale_x}"
+            scale_y = fr"\fscy{obj.styleref.scale_y}"
+            spacing = fr"\fsp{obj.styleref.spacing}"
+            shadow = fr"\shad{obj.styleref.shadow}"
+            outline = fr"\bord{obj.styleref.outline}"
 
-            self.context = cairo.Context(surface)
-            self.layout = PangoCairo.create_layout(self.context)
+            def remove_suffix(s, suffix):
+                while s.endswith(suffix):
+                    s = s[:-len(suffix)]
+                return s
 
-            font_description = Pango.FontDescription()
-            font_description.set_family(self.family)
-            font_description.set_absolute_size(self.size * self.upscale * PANGO_SCALE)
-            font_description.set_weight(
-                Pango.Weight.BOLD if self.bold else Pango.Weight.NORMAL
-            )
-            font_description.set_style(
-                Pango.Style.ITALIC if self.italic else Pango.Style.NORMAL
-            )
+            input_text = remove_suffix(input_text, r"\N")
+            input_text = remove_suffix(input_text, r"\n")
 
-            self.layout.set_font_description(font_description)
-            self.metrics = Pango.Context.get_metrics(
-                self.layout.get_context(), self.layout.get_font_description()
-            )
+            return (fr"{{{alignment}{fontname}{fontsize}{bold}{italic}{underline}{strikeout}"
+                    fr"{scale_x}{scale_y}{spacing}{shadow}{outline}}}{input_text}")
 
-            if LIBASS_FONTHACK:
-                self.fonthack_scale = self.size / (
-                    (self.metrics.get_ascent() + self.metrics.get_descent())
-                    / PANGO_SCALE
-                    * self.downscale
-                )
-            else:
-                self.fonthack_scale = 1
-        else:
-            raise NotImplementedError
+        meta = line.styleref.assref.meta
+        doc = ass.document.Document()
 
-    def __del__(self):
-        if sys.platform == "win32":
-            win32gui.DeleteObject(self.pycfont.GetSafeHandle())
-            win32gui.DeleteDC(self.dc)
+        doc.styles.append(ass.document.Style(
+            name="Default",
+            primary_color=ass.data.Color.BLACK
+        ))
 
-    def get_metrics(self):
-        if sys.platform == "win32":
-            const = self.downscale * self.yscale
-            return (
-                # 'height': self.metrics['Height'] * const,
-                self.metrics["Ascent"] * const,
-                self.metrics["Descent"] * const,
-                self.metrics["InternalLeading"] * const,
-                self.metrics["ExternalLeading"] * const,
-            )
-        elif sys.platform == "linux" or sys.platform == "darwin":
-            const = self.downscale * self.yscale * self.fonthack_scale / PANGO_SCALE
-            return (
-                # 'height': (self.metrics.get_ascent() + self.metrics.get_descent()) * const,
-                self.metrics.get_ascent() * const,
-                self.metrics.get_descent() * const,
-                0.0,
-                self.layout.get_spacing() * const,
-            )
-        else:
-            raise NotImplementedError
+        doc.events.append(ass.document.Dialogue(
+            start=timedelta(0),
+            end=timedelta(milliseconds=1),
+            style="Default",
+            margin_l=line.margin_l if line.margin_l != 0 else line.styleref.margin_l,
+            margin_r=line.margin_r if line.margin_r != 0 else line.styleref.margin_r,
+            margin_v=line.margin_v if line.margin_v != 0 else line.styleref.margin_v,
+            text=as_ass_text(line, text)
+        ))
 
-    def get_text_extents(self, text):
-        if sys.platform == "win32":
-            cx, cy = win32gui.GetTextExtentPoint32(self.dc, text)
+        if not (meta.play_res_x is not None and meta.play_res_y is not None
+                and meta.play_res_x > 0 and meta.play_res_y > 0):
+            raise Exception("Unknown resolution: cannot calculate positions")
 
-            return (
-                (cx * self.downscale + self.hspace * (len(text) - 1)) * self.xscale,
-                cy * self.downscale * self.yscale,
-            )
-        elif sys.platform == "linux" or sys.platform == "darwin":
-            if not text:
-                return 0.0, 0.0
+        size = meta.play_res_x, meta.play_res_y
+        wrap_style = 0
+        scaled_border_and_shadow = "no"
 
-            def get_rect(new_text):
-                self.layout.set_markup(
-                    f"<span "
-                    f'strikethrough="{str(self.strikeout).lower()}" '
-                    f'underline="{"single" if self.underline else "none"}"'
-                    f">"
-                    f"{html.escape(new_text)}"
-                    f"</span>",
-                    -1,
-                )
-                return self.layout.get_pixel_extents()[1]
+        if hasattr(meta, "scaled_border_and_shadow") and meta.scaled_border_and_shadow:
+            scaled_border_and_shadow = "yes"
 
-            width = 0
-            for char in text:
-                width += get_rect(char).width
+        if hasattr(meta, "wrap_style"):
+            wrap_style = meta.wrap_style
 
-            return (
-                (
-                    width * self.downscale * self.fonthack_scale
-                    + self.hspace * (len(text) - 1)
-                )
-                * self.xscale,
-                get_rect(text).height
-                * self.downscale
-                * self.yscale
-                * self.fonthack_scale,
-            )
-        else:
-            raise NotImplementedError
+        doc.play_res_x, doc.play_res_y = size
+        doc.scaled_border_and_shadow = scaled_border_and_shadow
+        doc.wrap_style = wrap_style
 
-    def text_to_shape(self, text):
-        if sys.platform == "win32":
-            # TODO: Calcultating distance between origins of character cells (just in case of spacing)
+        _renderer.set_all_sizes(size)
+        _track.populate(doc)
 
-            # Add path to device context
-            win32gui.BeginPath(self.dc)
-            win32gui.ExtTextOut(self.dc, 0, 0, 0x0, None, text)
-            win32gui.EndPath(self.dc)
-            # Getting Path produced by Microsoft API
-            points, type_points = win32gui.GetPath(self.dc)
+        glyph_infos = _renderer.get_glyph_info(_track, timedelta(0))
+        glyph_infos_size = glyph_infos.contents.size
 
-            # Checking for errors
-            if len(points) == 0 or len(points) != len(type_points):
-                raise RuntimeError(
-                    "This should never happen: function win32gui.GetPath has returned something unexpected.\nPlease report this to the developer"
-                )
+        glyph_list = []
 
-            # Defining variables
-            shape, last_type = [], None
-            mult_x, mult_y = self.downscale * self.xscale, self.downscale * self.yscale
+        for i in range(glyph_infos_size):
+            glyph_list.append(glyph_infos[i])
 
-            # Convert points to shape
-            i = 0
-            while i < len(points):
-                cur_point, cur_type = points[i], type_points[i]
+        return glyph_list
 
-                if cur_type == win32con.PT_MOVETO:
-                    if last_type != win32con.PT_MOVETO:
-                        # Avoid repetition of command tags
-                        shape.append("m")
-                        last_type = cur_type
-                    shape.extend(
-                        [
-                            Shape.format_value(cur_point[0] * mult_x),
-                            Shape.format_value(cur_point[1] * mult_y),
-                        ]
-                    )
-                    i += 1
-                elif cur_type == win32con.PT_LINETO or cur_type == (
-                    win32con.PT_LINETO | win32con.PT_CLOSEFIGURE
-                ):
-                    if last_type != win32con.PT_LINETO:
-                        # Avoid repetition of command tags
-                        shape.append("l")
-                        last_type = cur_type
-                    shape.extend(
-                        [
-                            Shape.format_value(cur_point[0] * mult_x),
-                            Shape.format_value(cur_point[1] * mult_y),
-                        ]
-                    )
-                    i += 1
-                elif cur_type == win32con.PT_BEZIERTO or cur_type == (
-                    win32con.PT_BEZIERTO | win32con.PT_CLOSEFIGURE
-                ):
-                    if last_type != win32con.PT_BEZIERTO:
-                        # Avoid repetition of command tags
-                        shape.append("b")
-                        last_type = cur_type
-                    shape.extend(
-                        [
-                            Shape.format_value(cur_point[0] * mult_x),
-                            Shape.format_value(cur_point[1] * mult_y),
-                            Shape.format_value(points[i + 1][0] * mult_x),
-                            Shape.format_value(points[i + 1][1] * mult_y),
-                            Shape.format_value(points[i + 2][0] * mult_x),
-                            Shape.format_value(points[i + 2][1] * mult_y),
-                        ]
-                    )
-                    i += 3
-                else:  # If there is an invalid type -> skip, for safeness
-                    i += 1
+    @staticmethod
+    def get_metrics(line, text):
+        if not text.strip():
+            return 0.0, 0.0
 
-            # Clear device context path
-            win32gui.AbortPath(self.dc)
+        glyphs = Font.glyph_data(line, text)
+        return Font.get_metrics_by_glyphs(glyphs)
 
-            return Shape(" ".join(shape))
-        elif sys.platform == "linux" or sys.platform == "darwin":
-            # Defining variables
-            shape, last_type = [], None
+    @staticmethod
+    def get_metrics_by_glyphs(glyph_list):
+        if not glyph_list:
+            return 0.0, 0.0
 
-            def shape_from_text(new_text, x_add):
-                nonlocal shape, last_type
+        ascend, descend = 0, 0
 
-                self.layout.set_markup(
-                    f"<span "
-                    f'strikethrough="{str(self.strikeout).lower()}" '
-                    f'underline="{"single" if self.underline else "none"}"'
-                    f">"
-                    f"{html.escape(new_text)}"
-                    f"</span>",
-                    -1,
-                )
+        for i, glyph in enumerate(glyph_list):
+            ascend = min(ascend, glyph.box_ymin)
+            descend = max(descend, glyph.box_ymax)
 
-                self.context.save()
-                self.context.scale(
-                    self.downscale * self.xscale * self.fonthack_scale,
-                    self.downscale * self.yscale * self.fonthack_scale,
-                )
-                PangoCairo.layout_path(self.context, self.layout)
-                self.context.restore()
-                path = self.context.copy_path()
+        return abs(ascend) / SCALE_FACTOR, abs(descend) / SCALE_FACTOR
 
-                # Convert points to shape
-                for current_entry in path:
-                    current_type = current_entry[0]
-                    current_path = current_entry[1]
+    @staticmethod
+    def get_text_extents(line, text):
+        if not text.strip():
+            return 0.0, 0.0
 
-                    if current_type == 0:  # MOVE_TO
-                        if last_type != current_type:
-                            # Avoid repetition of command tags
-                            shape.append("m")
-                            last_type = current_type
-                        shape.extend(
-                            [
-                                Shape.format_value(current_path[0] + x_add),
-                                Shape.format_value(current_path[1]),
-                            ]
-                        )
-                    elif current_type == 1:  # LINE_TO
-                        if last_type != current_type:
-                            # Avoid repetition of command tags
-                            shape.append("l")
-                            last_type = current_type
-                        shape.extend(
-                            [
-                                Shape.format_value(current_path[0] + x_add),
-                                Shape.format_value(current_path[1]),
-                            ]
-                        )
-                    elif current_type == 2:  # CURVE_TO
-                        if last_type != current_type:
-                            # Avoid repetition of command tags
-                            shape.append("b")
-                            last_type = current_type
-                        shape.extend(
-                            [
-                                Shape.format_value(current_path[0] + x_add),
-                                Shape.format_value(current_path[1]),
-                                Shape.format_value(current_path[2] + x_add),
-                                Shape.format_value(current_path[3]),
-                                Shape.format_value(current_path[4] + x_add),
-                                Shape.format_value(current_path[5]),
-                            ]
-                        )
+        glyphs = Font.glyph_data(line, text + r"\h")
+        width, height = 0, 0
 
-                self.context.new_path()
+        for i, glyph in enumerate(glyphs):
+            if i == 0:
+                width -= glyph.pos_x
+            elif i == len(glyphs) - 1:
+                width += glyph.pos_x
 
-            curr_width = 0
+            height = max(height, abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR)
 
-            for i, char in enumerate(text):
-                shape_from_text(char, curr_width + self.hspace * self.xscale * i)
-                curr_width += self.get_text_extents(char)[0]
+        return width, height
 
-            return Shape(" ".join(shape))
-        else:
-            raise NotImplementedError
+    @staticmethod
+    def text_to_shape(line, text):
+        raise NotImplementedError
