@@ -115,6 +115,8 @@ class Font:
         for i in range(glyph_infos_size):
             glyph_list.append(glyph_infos[i])
 
+        print(f"{as_ass_text(line, text)}: {[(x.pos_x, x.pos_y, x.box_xmin, x.box_xmax, x.box_ymin, x.box_ymax) for x in glyph_list]}\n")
+
         return glyph_list
 
     @staticmethod
