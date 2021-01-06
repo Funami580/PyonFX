@@ -43,6 +43,7 @@ jobs:
       - if: matrix.os == 'macos-latest'
         name: Install dependencies (macOS)
         run: |
+          ls /Users/runner/Library/Fonts/
           brew install automake freetype fribidi nasm harfbuzz
           python -m pip install --upgrade pip
           pip install -r requirements.txt
