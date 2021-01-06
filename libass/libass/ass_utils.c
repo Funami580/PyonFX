@@ -322,7 +322,7 @@ int numpad2align(int val)
 void ass_msg(ASS_Library *priv, int lvl, const char *fmt, ...)
 {
     // PyonFX suppress
-    return;
+    // return;
     // end
 
     va_list va;
