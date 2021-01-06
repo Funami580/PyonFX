@@ -5,7 +5,7 @@ Advanced SubStation Alpha subtitle files.
 
 ## Documents
 
-Example file: [**tests/test.ass**](./tests/test.ass)
+Example file: [**tests/test.ass**](tests/test.ass)
 
 You can parse the file:
 

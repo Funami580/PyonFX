@@ -19,14 +19,13 @@ This file contains the Font class definition, which has some functions
 to help getting informations from a specific font
 """
 import sys
-from .shape import Shape
 
 if "sphinx" not in sys.modules:
-    import python_ass.ass as ass
-    import python_ass.ass.renderer
+    import pyonfx.python_ass.ass as ass
+    import pyonfx.python_ass.ass.renderer
     from datetime import timedelta
 
-    _context = ass.renderer.Context()
+    _context = pyonfx.python_ass.ass.renderer.Context()
     _renderer = _context.make_renderer()
     _renderer.set_fonts(fontconfig_config="\0")
     _track = _context.make_track()
@@ -69,14 +68,14 @@ class Font:
                     fr"{scale_x}{scale_y}{spacing}{shadow}{outline}}}{input_text}")
 
         meta = line.styleref.assref.meta
-        doc = ass.document.Document()
+        doc = pyonfx.python_ass.ass.document.Document()
 
-        doc.styles.append(ass.document.Style(
+        doc.styles.append(pyonfx.python_ass.ass.document.Style(
             name="Default",
             primary_color=ass.data.Color.BLACK
         ))
 
-        doc.events.append(ass.document.Dialogue(
+        doc.events.append(pyonfx.python_ass.ass.document.Dialogue(
             start=timedelta(0),
             end=timedelta(milliseconds=1),
             style="Default",

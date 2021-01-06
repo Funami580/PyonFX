@@ -1,15 +1,14 @@
-import ass
 import ass.renderer
 from datetime import timedelta
 
-doc = ass.document.Document()
+doc = pyonfx.python_ass.ass.document.Document()
 
-doc.styles.append(ass.document.Style(
+doc.styles.append(pyonfx.python_ass.ass.document.Style(
     name="Default",
     primary_color=ass.data.Color.BLACK
 ))
 
-doc.events.append(ass.document.Dialogue(
+doc.events.append(pyonfx.python_ass.ass.document.Dialogue(
     start=timedelta(0),
     end=timedelta(milliseconds=1),
     style="Default",
@@ -25,7 +24,7 @@ doc.play_res_x, doc.play_res_y = SIZE
 doc.scaled_border_and_shadow = "yes"
 doc.wrap_style = 0
 
-ctx = ass.renderer.Context()
+ctx = pyonfx.python_ass.ass.renderer.Context()
 
 r = ctx.make_renderer()
 r.set_fonts(fontconfig_config="\0")
