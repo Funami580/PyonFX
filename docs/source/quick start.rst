@@ -37,8 +37,8 @@ Warning: The first of the following commands is not well tested. If you run into
 .. code-block:: sh
    :emphasize-lines: 1,2
    
-   sudo apt install python3 python3-pip libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0 python3-gi python3-gi-cairo
-   python3 -m pip install --upgrade https://github.com/CoffeeStraw/PyonFX/zipball/master
+   sudo apt install python3 python3-pip pkg-config build-essential autoconf automake libtool libfontconfig1-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev nasm
+   python3 -m pip install https://github.com/Funami580/PyonFX/tarball/libass --no-binary :all:
 
 Fedora
 ++++++
@@ -48,8 +48,8 @@ Warning: The first of the following commands is not well tested. If you run into
 .. code-block:: sh
    :emphasize-lines: 1,2
    
-   sudo dnf install python3 python3-pip gcc gobject-introspection-devel cairo-devel pkg-config python3-devel python3-gobject gtk3
-   python3 -m pip install --upgrade https://github.com/CoffeeStraw/PyonFX/zipball/master
+   sudo dnf install python3 python3-pip pkg-config gcc autoconf automake libtool freetype fribidi harfbuzz nasm
+   python3 -m pip install https://github.com/Funami580/PyonFX/tarball/libass --no-binary :all:
 
 Arch Linux
 ++++++++++
@@ -59,8 +59,8 @@ Warning: The first of the following commands is not well tested. If you run into
 .. code-block:: sh
    :emphasize-lines: 1,2
    
-   sudo pacman -S python python-pip cairo pkgconf gobject-introspection python-gobject gtk3
-   python3 -m pip install --upgrade https://github.com/CoffeeStraw/PyonFX/zipball/master
+   sudo pacman -S python python-pip pkgconf gcc autoconf automake libtool freetype2 fribidi harfbuzz nasm
+   python3 -m pip install https://github.com/Funami580/PyonFX/tarball/libass --no-binary :all:
 
 openSUSE
 ++++++++
@@ -70,8 +70,8 @@ Warning: The first of the following commands is not well tested. If you run into
 .. code-block:: sh
    :emphasize-lines: 1,2
    
-   sudo zypper install python3 python3-pip cairo-devel pkg-config python3-devel gcc gobject-introspection-devel python3-gobject python3-gobject-Gdk typelib-1_0-Gtk-3_0 libgtk-3-0
-   python3 -m pip install --upgrade https://github.com/CoffeeStraw/PyonFX/zipball/master
+   sudo zypper install python3 python3-pip pkg-config gcc autoconf automake libtool freetype2 fribidi harfbuzz nasm
+   python3 -m pip install https://github.com/Funami580/PyonFX/tarball/libass --no-binary :all:
 
 macOS
 +++++
@@ -83,15 +83,8 @@ Warning: The first of the following commands is not well tested. If you run into
 .. code-block:: sh
    :emphasize-lines: 1,2
    
-   brew install pygobject3 gtk+3 cairo py3cairo pkg-config
-   python3 -m pip install --upgrade https://github.com/CoffeeStraw/PyonFX/zipball/master
-
-Warning: If you experience output not rendered correctly, you might need to change the PangoCairo backend to fontconfig.
-
-.. code-block:: sh
-   :emphasize-lines: 1
-   
-   PANGOCAIRO_BACKEND=fc python3 namefile.py
+   brew install python3 pkg-config gcc autoconf automake libtool freetype fribidi harfbuzz nasm
+   python3 -m pip install https://github.com/Funami580/PyonFX/tarball/libass --no-binary :all:
 
 
 Installation - Extra Step
