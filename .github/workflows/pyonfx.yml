@@ -43,7 +43,7 @@ jobs:
       - if: matrix.os == 'macos-latest'
         name: Install dependencies (macOS)
         run: |
-          brew install pkg-config freetype fribidi nasm harfbuzz
+          brew install pkg-config autoconf automake libtool freetype fribidi nasm harfbuzz
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           cd libass && ./autogen.sh && ./configure && make
