@@ -18,7 +18,7 @@ jobs:
         name: Install font (Non-Windows)
         run: |
           GOBIN=$PWD/bin go get github.com/Crosse/font-install
-          ./bin/font-install https://mirrors.tuna.tsinghua.edu.cn/osdn/mix-mplus-ipa/58720/migu-1p-20130430.zip
+          ./bin/font-install -debug https://mirrors.tuna.tsinghua.edu.cn/osdn/mix-mplus-ipa/58720/migu-1p-20130430.zip
         shell: bash
       - if: matrix.os == 'windows-latest'
         name: Install font (Windows)
