@@ -181,7 +181,7 @@ typedef struct glyph_info {
 
 // PyonFX API
 struct GlyphData {
-    uint size;
+    uint32_t size;
     double pos_x;
     int pos_y;
     int box_xmin, box_ymin, box_xmax, box_ymax;

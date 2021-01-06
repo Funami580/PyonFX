@@ -486,7 +486,7 @@ class Track(ctypes.Structure):
 
 class GlyphData(ctypes.Structure):
     _fields_ = [
-        ("size", ctypes.c_uint),
+        ("size", ctypes.c_uint32),
         ("pos_x", ctypes.c_double),
         ("pos_y", ctypes.c_int),
         ("box_xmin", ctypes.c_int),

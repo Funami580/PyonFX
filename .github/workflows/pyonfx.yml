@@ -36,14 +36,14 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         name: Install dependencies (Linux)
         run: |
-          sudo apt-get install pkg-config libfontconfig1-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev nasm
+          sudo apt-get install libfontconfig1-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev nasm
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           cd libass && ./autogen.sh && ./configure && make
       - if: matrix.os == 'macos-latest'
         name: Install dependencies (macOS)
         run: |
-          brew install pkg-config autoconf automake libtool freetype fribidi nasm harfbuzz
+          brew install automake freetype fribidi nasm harfbuzz
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           cd libass && ./autogen.sh && ./configure && make

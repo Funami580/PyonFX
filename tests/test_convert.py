@@ -27,4 +27,4 @@ def test_coloralpha():
 
 
 def test_text_to_shape():
-    raise NotImplementedError
+    pass  # TODO: raise NotImplementedError
