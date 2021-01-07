@@ -69,7 +69,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
     ],
     cmdclass={
-        'develop': PreDevelopCommand,
-        'install': PreInstallCommand,
+        "develop": PreDevelopCommand,
+        "install": PreInstallCommand,
     },
 )

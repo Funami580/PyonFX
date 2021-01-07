@@ -143,16 +143,9 @@ class Font:
             return 0.0, 0.0
 
         glyphs = Font.glyph_data(line, text + r"\h")
-        width, height = 0, 0
-
-        for i, glyph in enumerate(glyphs):
-            if i == 0:
-                width -= glyph.pos_x
-            elif i == len(glyphs) - 1:
-                width += glyph.pos_x
-
-            height = max(height, abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR)
-
+        metrics = Font.get_metrics_by_glyphs(glyphs)
+        width = abs(glyphs[0].pos_x - glyphs[-1].pos_x)
+        height = metrics[0] + metrics[1]
         return width, height
 
     @staticmethod

@@ -910,7 +910,8 @@ class Ass:
                 obj_start = glyphs[start_index]
                 obj_end_x = get_pos_x(end_index)
                 obj.width = obj_end_x - obj_start.pos_x
-                obj.height = max(abs(a.box_ymax - a.box_ymin) / SCALE_FACTOR for a in glyphs[start_index:end_index])
+                metrics = Font.get_metrics_by_glyphs(glyphs[start_index:end_index])
+                obj.height = metrics[0] + metrics[1]
 
             last_word = None
 

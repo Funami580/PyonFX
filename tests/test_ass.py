@@ -112,7 +112,7 @@ def test_line_values():
 
     # Bold - Text with some tags
     check.equal(lines[11].width, 943.6875)
-    check.equal(lines[11].height, 26.15625)
+    check.equal(lines[11].height, 33.71875)
 
     # Bold - Vertical Text
     check.equal(lines[12].width, 31.625)
