@@ -23,7 +23,7 @@ def find_version(*file_paths):
 
 
 def make_libass():
-    if os.environ.get('READTHEDOCS') == 'True':
+    if os.environ.get("READTHEDOCS") == "True":
         return
 
     current_path = os.path.realpath(Path(__file__).parent)

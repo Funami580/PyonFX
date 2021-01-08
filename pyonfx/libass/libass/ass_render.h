@@ -185,6 +185,9 @@ struct GlyphData {
     double pos_x;
     int pos_y;
     int box_xmin, box_ymin, box_xmax, box_ymax;
+    size_t n_segments, n_points;
+    char *segments;
+    ASS_Vector *points;
 };
 // end
 

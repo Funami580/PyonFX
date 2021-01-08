@@ -19,6 +19,8 @@ This file contains the Font class definition, which has some functions
 to help getting informations from a specific font
 """
 import sys
+import math
+from .shape import Shape
 
 if "sphinx" not in sys.modules:
     from .python_ass import ass
@@ -150,4 +152,96 @@ class Font:
 
     @staticmethod
     def text_to_shape(line, text):
-        raise NotImplementedError
+        if not text.strip():
+            return Shape("")
+
+        glyphs = Font.glyph_data(line, text)
+        return Font.text_to_shape_by_glyphs(glyphs, line.styleref.fontsize)
+
+    @staticmethod
+    def text_to_shape_by_glyphs(glyph_list, fontsize):
+        if not glyph_list:
+            return Shape("")
+
+        metrics = Font.get_metrics_by_glyphs(glyph_list)
+        total_height = metrics[0] + metrics[1]
+
+        def char_to_shape(glyph):
+            segments_len = glyph.n_segments
+            points_len = glyph.n_points
+
+            if points_len <= 0:
+                return []
+
+            if segments_len <= 0:
+                raise Exception
+
+            segments = glyph.segments
+            points = glyph.points
+            min_y, max_y = math.inf, -math.inf
+
+            for i in range(points_len):
+                point = points[i]
+                if point.y < min_y:
+                    min_y = point.y
+                if point.y > max_y:
+                    max_y = point.y
+
+            height = abs(max_y - min_y)
+            actual_height = abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR
+            scale_factor = actual_height / height
+
+            def map_x(x):
+                return x * scale_factor + glyph.pos_x
+
+            def map_y(y):
+                return y * scale_factor + glyph.pos_y + (fontsize - total_height)  # TODO
+
+            segment_map = {
+                1: ("l", 1),
+                2: ("b", 2),
+            }
+
+            instructions = []
+            contour_point = points[0]
+            segment_index = 0
+            point_index = 0
+
+            instructions.extend([
+                "m",
+                Shape.format_value(map_x(points[0].x)),
+                Shape.format_value(map_y(points[0].y)),
+            ])
+
+            while point_index < points_len:
+                if segment_index >= segments_len:
+                    raise Exception("Unexpected behaviour")
+
+                segment_key = ord(segments[segment_index])
+                segment = segment_key & 0b11
+                last_segment = segment_key & 0b100 != 0
+                identifier, num_points = segment_map[segment]
+                last_point = points[point_index+num_points] if not last_segment else contour_point
+
+                instructions.append(identifier)
+
+                for point in points[point_index:point_index+num_points] + [last_point]:
+                    instructions.extend([
+                        Shape.format_value(map_x(point.x)),
+                        Shape.format_value(map_y(point.y)),
+                    ])
+
+                if last_segment and point_index + num_points < points_len:
+                    contour_point = points[point_index+num_points]
+
+                point_index += num_points
+                segment_index += 1
+
+            return instructions
+
+        all_instructions = []
+
+        for glyph in glyph_list:
+            all_instructions.extend(char_to_shape(glyph))
+
+        return Shape(" ".join(all_instructions))

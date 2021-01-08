@@ -484,6 +484,13 @@ class Track(ctypes.Structure):
             event.populate(d_event)
 
 
+class ASS_Vector(ctypes.Structure):
+    _fields_ = [
+        ("x", ctypes.c_int32),
+        ("y", ctypes.c_int32)
+    ]
+
+
 class GlyphData(ctypes.Structure):
     _fields_ = [
         ("size", ctypes.c_uint32),
@@ -492,7 +499,11 @@ class GlyphData(ctypes.Structure):
         ("box_xmin", ctypes.c_int),
         ("box_ymin", ctypes.c_int),
         ("box_xmax", ctypes.c_int),
-        ("box_ymax", ctypes.c_int)
+        ("box_ymax", ctypes.c_int),
+        ("n_segments", ctypes.c_size_t),
+        ("n_points", ctypes.c_size_t),
+        ("segments", ctypes.POINTER(ctypes.c_char)),
+        ("points", ctypes.POINTER(ASS_Vector))
     ]
 
 
