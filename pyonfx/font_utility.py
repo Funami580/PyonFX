@@ -195,7 +195,7 @@ class Font:
                 return x * scale_factor + glyph.pos_x
 
             def map_y(y):
-                return y * scale_factor + glyph.pos_y + (fontsize - total_height)  # TODO
+                return y * scale_factor + fontsize / 2
 
             segment_map = {
                 1: ("l", 1),
@@ -244,4 +244,15 @@ class Font:
         for glyph in glyph_list:
             all_instructions.extend(char_to_shape(glyph))
 
-        return Shape(" ".join(all_instructions))
+        shape = Shape(" ".join(all_instructions))
+        min_y = math.inf
+
+        def map_min(x, y):
+            nonlocal min_y
+            min_y = min(min_y, y)
+            return x, y
+
+        shape.map(map_min)
+        shape.move(0, glyph_list[0].pos_y + fontsize / 2 - total_height + min_y)
+
+        return shape
