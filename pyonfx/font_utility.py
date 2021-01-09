@@ -20,6 +20,7 @@ to help getting informations from a specific font
 """
 import sys
 import math
+import bisect
 from .shape import Shape
 
 if "sphinx" not in sys.modules:
@@ -151,22 +152,57 @@ class Font:
         return width, height
 
     @staticmethod
-    def text_to_shape(line, text):
+    def text_to_shape(line, text_obj):
+        if not text_obj:
+            return Shape("")
+
+        from . import Line, Word, Syllable, Char
+
+        class KeyList:
+            def __init__(self, l, key):
+                self.l = l
+                self.key = key
+
+            def __len__(self):
+                return len(self.l)
+
+            def __getitem__(self, index):
+                return self.key(self.l[index])
+
+        char_list = []
+
+        def add_by_key(key, value):
+            first_index = bisect.bisect_left(KeyList(line.chars, key=key), value)
+
+            for char in line.chars[first_index:]:
+                if key(char) == value:
+                    char_list.append(char)
+                else:
+                    break
+
+        if isinstance(text_obj, Line):
+            char_list = text_obj.chars
+        elif isinstance(text_obj, Word):
+            add_by_key(lambda x: x.word_i, text_obj.i)
+        elif isinstance(text_obj, Syllable):
+            add_by_key(lambda x: x.syl_i, text_obj.i)
+        elif isinstance(text_obj, Char):
+            char_list = [text_obj]
+
+        text = "".join(map(lambda x: x.text, char_list))
+
         if not text.strip():
             return Shape("")
 
         glyphs = Font.glyph_data(line, text)
-        return Font.text_to_shape_by_glyphs(glyphs, line.styleref.fontsize)
+        return Font.text_to_shape_by_glyphs(char_list, glyphs)
 
     @staticmethod
-    def text_to_shape_by_glyphs(glyph_list, fontsize):
+    def text_to_shape_by_glyphs(char_list, glyph_list):
         if not glyph_list:
             return Shape("")
 
-        metrics = Font.get_metrics_by_glyphs(glyph_list)
-        total_height = metrics[0] + metrics[1]
-
-        def char_to_shape(glyph):
+        def char_to_shape(char, glyph):
             segments_len = glyph.n_segments
             points_len = glyph.n_points
 
@@ -187,22 +223,24 @@ class Font:
                 if point.y > max_y:
                     max_y = point.y
 
-            height = abs(max_y - min_y)
+            height = abs(max_y - min_y)  # TODO
             actual_height = abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR
             scale_factor = actual_height / height
 
             def map_x(x):
-                return x * scale_factor + glyph.pos_x
+                return x * scale_factor + char.left
 
             def map_y(y):
-                return y * scale_factor + fontsize / 2
+                return y * scale_factor + char.middle  # TODO
 
             segment_map = {
                 1: ("l", 1),
                 2: ("b", 2),
+                3: ("b", 3),
             }
 
             instructions = []
+            last_identifier = "m"
             contour_point = points[0]
             segment_index = 0
             point_index = 0
@@ -223,16 +261,32 @@ class Font:
                 identifier, num_points = segment_map[segment]
                 last_point = points[point_index+num_points] if not last_segment else contour_point
 
-                instructions.append(identifier)
+                if identifier != last_identifier:
+                    instructions.append(identifier)
 
-                for point in points[point_index:point_index+num_points] + [last_point]:
+                start_index = point_index
+
+                if num_points == 3:
+                    start_index += 1
+                elif num_points > 3:
+                    raise Exception
+
+                for point in points[start_index:point_index+num_points] + [last_point]:
                     instructions.extend([
                         Shape.format_value(map_x(point.x)),
                         Shape.format_value(map_y(point.y)),
                     ])
 
+                last_identifier = identifier
+
                 if last_segment and point_index + num_points < points_len:
                     contour_point = points[point_index+num_points]
+                    instructions.extend([
+                        "m",
+                        Shape.format_value(map_x(contour_point.x)),
+                        Shape.format_value(map_y(contour_point.y)),
+                    ])
+                    last_identifier = "m"
 
                 point_index += num_points
                 segment_index += 1
@@ -241,18 +295,7 @@ class Font:
 
         all_instructions = []
 
-        for glyph in glyph_list:
-            all_instructions.extend(char_to_shape(glyph))
+        for char, glyph in zip(char_list, glyph_list):
+            all_instructions.extend(char_to_shape(char, glyph))
 
-        shape = Shape(" ".join(all_instructions))
-        min_y = math.inf
-
-        def map_min(x, y):
-            nonlocal min_y
-            min_y = min(min_y, y)
-            return x, y
-
-        shape.map(map_min)
-        shape.move(0, glyph_list[0].pos_y + fontsize / 2 - total_height + min_y)
-
-        return shape
+        return Shape(" ".join(all_instructions))
