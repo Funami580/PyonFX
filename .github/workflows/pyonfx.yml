@@ -27,10 +27,24 @@ jobs:
         shell: pwsh
 
       # setup python
-      - name: Set up Python ${{ matrix.python-version }}
+      - if: matrix.os != 'windows-latest'
+        name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      # setup wsl
+      - if: matrix.os == 'windows-latest'
+        name: Set up WSL
+        uses: Vampire/setup-wsl@v1
+        with:
+          distribution: Ubuntu-20.04
+          additional-packages:
+            libfontconfig1-dev
+            libfreetype6-dev
+            libfribidi-dev
+            libharfbuzz-dev
+            nasm
 
       # install dependencies
       - if: matrix.os == 'ubuntu-latest'
@@ -49,15 +63,6 @@ jobs:
           cd pyonfx/libass && ./autogen.sh && ./configure && make
       - if: matrix.os == 'windows-latest'
         name: Install dependencies (Windows)
-        uses: Vampire/setup-wsl@v1
-        with:
-            distribution: Ubuntu-20.04
-            additional-packages:
-                libfontconfig1-dev
-                libfreetype6-dev
-                libfribidi-dev
-                libharfbuzz-dev
-                nasm
         shell: wsl-bash {0}
         run: |
           python -m pip install --upgrade pip
