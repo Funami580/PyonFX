@@ -233,12 +233,14 @@ class Shape:
         return self
 
     def bounding(self):
-        """Calculates shape bounding box.
+        """Returns a bounding box which encloses all points in every case (even with bezier curves).
+        If the shape contains bezier curves, the bounding box may not be exact and have some space around.
+        If you want an exact bounding box instead, use the bounding_exact function.
 
         **Tips:** *Using this you can get more precise information about a shape (width, height, position).*
 
         Returns:
-            A tuple (x0, y0, x1, y1) containing coordinates of the bounding box.
+            A tuple (x_min, y_min, x_max, y_max) containing coordinates of the bounding box.
 
         Examples:
             ..  code-block:: python3
@@ -263,6 +265,144 @@ class Shape:
 
         self.map(compute_edges)
         return x0, y0, x1, y1
+
+    def bounding_exact(self):
+        """Calculates the exact shape bounding box.
+
+        **Tips:** *Using this you can get more precise information about a shape (width, height, position).*
+
+        Returns:
+            A tuple (x_min, y_min, x_max, y_max) containing coordinates of the bounding box.
+
+        Examples:
+            ..  code-block:: python3
+
+                print(Shape("m 313 312 b 254 287 482 38 277 212 l 436 269 b 378 388 461 671 260 481").bounding_exact())
+
+            >>> (260.0, 150.67823683425252, 436.0, 544.871772934194)
+        """
+
+        # From: https://stackoverflow.com/a/14429749
+        def get_bounds_of_curve(x0, y0, x1, y1, x2, y2, x3, y3):
+            tvalues, bounds, points = [], {0: {}, 1: {}}, []
+            a, b, c, t, t1, t2, b2ac, sqrtb2ac = None, None, None, None, None, None, None, None
+
+            for i in range(2):
+                if i == 0:
+                    b = 6 * x0 - 12 * x1 + 6 * x2
+                    a = -3 * x0 + 9 * x1 - 9 * x2 + 3 * x3
+                    c = 3 * x1 - 3 * x0
+                else:
+                    b = 6 * y0 - 12 * y1 + 6 * y2
+                    a = -3 * y0 + 9 * y1 - 9 * y2 + 3 * y3
+                    c = 3 * y1 - 3 * y0
+
+                if abs(a) < 1e-12:  # Numerical robustness
+                    if abs(b) < 1e-12:  # Numerical robustness
+                        continue
+                    t = -c / b
+                    if 0 < t < 1:
+                        tvalues.append(t)
+                    continue
+                b2ac = b * b - 4 * c * a
+                if b2ac < 0:
+                    continue
+                sqrtb2ac = math.sqrt(b2ac)
+                t1 = (-b + sqrtb2ac) / (2 * a)
+                if 0 < t1 < 1:
+                    tvalues.append(t1)
+                t2 = (-b - sqrtb2ac) / (2 * a)
+                if 0 < t2 < 1:
+                    tvalues.append(t2)
+
+            x, y, j, jlen, mt = None, None, len(tvalues), len(tvalues), None
+
+            while j > 0:
+                j -= 1
+                t = tvalues[j]
+                mt = 1 - t
+                x = (mt * mt * mt * x0) + (3 * mt * mt * t * x1) + (3 * mt * t * t * x2) + (t * t * t * x3)
+                bounds[0][j] = x
+                y = (mt * mt * mt * y0) + (3 * mt * mt * t * y1) + (3 * mt * t * t * y2) + (t * t * t * y3)
+                bounds[1][j] = y
+
+            bounds[0][jlen] = x0
+            bounds[1][jlen] = y0
+            bounds[0][jlen + 1] = x3
+            bounds[1][jlen + 1] = y3
+
+            def update_length(dict_obj, new_len):
+                new_dict, i = {}, 0
+
+                for key in sorted(dict_obj.keys()):
+                    new_dict[key] = dict_obj[key]
+                    i += 1
+
+                    if i == new_len:
+                        break
+
+                return new_dict
+
+            bounds[0] = update_length(bounds[0], jlen + 2)
+            bounds[1] = update_length(bounds[1], jlen + 2)
+
+            return (min(bounds[0].values()), min(bounds[1].values()),  # x_min, y_min
+                    max(bounds[0].values()), max(bounds[1].values()))  # x_max, y_max
+
+        x_min, y_min, x_max, y_max = math.inf, math.inf, -math.inf, -math.inf
+
+        def update_min_max(x, y):
+            nonlocal x_min, y_min, x_max, y_max
+            x_min = min(x_min, x)
+            y_min = min(y_min, y)
+            x_max = max(x_max, x)
+            y_max = max(y_max, y)
+
+        instructions = self.drawing_cmds.split()
+        curr_identifier, curr_values = None, []
+        cursor = (0, 0)
+        index = 0
+
+        while index < len(instructions):
+            instruction = instructions[index]
+            is_identifier = instruction.isalpha()
+            index += 1
+
+            if is_identifier:
+                if curr_values:
+                    raise Exception
+                curr_identifier = instruction
+                continue
+
+            if curr_identifier is None:
+                raise Exception
+
+            curr_values.append(float(instruction))
+
+            if curr_identifier == "m":
+                if len(curr_values) == 2:
+                    cursor = tuple(curr_values)
+                    update_min_max(*cursor)
+                    curr_values = []
+                continue
+
+            if curr_identifier == "l":
+                if len(curr_values) == 2:
+                    cursor = tuple(curr_values)
+                    update_min_max(*cursor)
+                    curr_values = []
+                continue
+
+            if curr_identifier == "b":
+                if len(curr_values) == 6:
+                    bounds = get_bounds_of_curve(*cursor, *curr_values)
+                    update_min_max(*bounds[:2])
+                    update_min_max(*bounds[2:])
+                    cursor = tuple(curr_values[-2:])
+                    curr_values = []
+                continue
+
+        return x_min, y_min, x_max, y_max
 
     def move(self, x=None, y=None):
         """Moves shape coordinates in given direction.
