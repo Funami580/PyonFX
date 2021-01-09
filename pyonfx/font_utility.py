@@ -264,12 +264,10 @@ class Font:
                 if identifier != last_identifier:
                     instructions.append(identifier)
 
-                start_index = point_index
+                start_index = point_index + 1
 
-                if num_points == 3:
-                    start_index += 1
-                elif num_points > 3:
-                    raise Exception
+                if num_points == 2:
+                    start_index -= 1
 
                 for point in points[start_index:point_index+num_points] + [last_point]:
                     instructions.extend([
