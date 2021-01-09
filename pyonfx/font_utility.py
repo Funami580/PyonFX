@@ -187,6 +187,8 @@ class Font:
             add_by_key(lambda x: x.syl_i, text_obj.i)
         elif isinstance(text_obj, Char):
             char_list = [text_obj]
+        else:
+            raise Exception("Expected Line, Word, Syllable or Char object, got %s." % type(text_obj))
 
         text = "".join(map(lambda x: x.text, char_list))
 
