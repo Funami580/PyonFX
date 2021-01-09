@@ -196,10 +196,10 @@ class Font:
             return Shape("")
 
         glyphs = Font.glyph_data(line, text)
-        return Font.text_to_shape_by_glyphs(line, char_list, glyphs)
+        return Font.text_to_shape_by_glyphs(line, char_list, glyphs, text_obj)
 
     @staticmethod
-    def text_to_shape_by_glyphs(line, char_list, glyph_list):
+    def text_to_shape_by_glyphs(line, char_list, glyph_list, text_obj):
         if not glyph_list or not char_list:
             return Shape("")
 
@@ -288,8 +288,8 @@ class Font:
             scale_factor = actual_height / height
 
             def map_shape(x, y):
-                return (x * scale_factor + char.left,
-                        y * scale_factor + char.top + line.max_ascent)
+                return (x * scale_factor + char.left - text_obj.left,
+                        y * scale_factor + char.top + line.max_ascent - text_obj.top)
 
             char_shape.map(map_shape)
             return repr(char_shape).split()
