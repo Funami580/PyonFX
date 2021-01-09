@@ -202,6 +202,14 @@ class Font:
         if not glyph_list:
             return Shape("")
 
+        def to_shape(instr_list):
+            def map_shape(x):
+                if type(x) == str and x.isalpha():
+                    return x
+                else:
+                    return Shape.format_value(x)
+            return Shape(" ".join(map(map_shape, instr_list)))
+
         def char_to_shape(char, glyph):
             segments_len = glyph.n_segments
             points_len = glyph.n_points
@@ -214,24 +222,6 @@ class Font:
 
             segments = glyph.segments
             points = glyph.points
-            min_y, max_y = math.inf, -math.inf
-
-            for i in range(points_len):
-                point = points[i]
-                if point.y < min_y:
-                    min_y = point.y
-                if point.y > max_y:
-                    max_y = point.y
-
-            height = abs(max_y - min_y)  # TODO
-            actual_height = abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR
-            scale_factor = actual_height / height
-
-            def map_x(x):
-                return x * scale_factor + char.left
-
-            def map_y(y):
-                return y * scale_factor + char.middle  # TODO
 
             segment_map = {
                 1: ("l", 1),
@@ -247,8 +237,8 @@ class Font:
 
             instructions.extend([
                 "m",
-                Shape.format_value(map_x(points[0].x)),
-                Shape.format_value(map_y(points[0].y)),
+                points[0].x,
+                points[0].y,
             ])
 
             while point_index < points_len:
@@ -271,8 +261,8 @@ class Font:
 
                 for point in points[start_index:point_index+num_points] + [last_point]:
                     instructions.extend([
-                        Shape.format_value(map_x(point.x)),
-                        Shape.format_value(map_y(point.y)),
+                        point.x,
+                        point.y,
                     ])
 
                 last_identifier = identifier
@@ -281,15 +271,27 @@ class Font:
                     contour_point = points[point_index+num_points]
                     instructions.extend([
                         "m",
-                        Shape.format_value(map_x(contour_point.x)),
-                        Shape.format_value(map_y(contour_point.y)),
+                        contour_point.x,
+                        contour_point.y,
                     ])
                     last_identifier = "m"
 
                 point_index += num_points
                 segment_index += 1
 
-            return instructions
+            char_shape = to_shape(instructions)
+            _, y_min, _, y_max = char_shape.bounding_exact()
+
+            height = abs(y_max - y_min)
+            actual_height = abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR
+            scale_factor = actual_height / height
+
+            def map_shape(x, y):
+                return (x * scale_factor + char.left,
+                        y * scale_factor + char.middle)
+
+            char_shape.map(map_shape)
+            return repr(char_shape).split()
 
         all_instructions = []
 
