@@ -41,6 +41,11 @@ jobs:
           distribution: Ubuntu-20.04
           additional-packages:
             python3-pip
+            build-essential
+            pkg-config
+            autoconf
+            automake
+            libtool
             libfontconfig1-dev
             libfreetype6-dev
             libfribidi-dev
@@ -66,8 +71,7 @@ jobs:
         name: Install dependencies (Windows)
         shell: wsl-bash {0}
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.txt
+          python3 -m pip install . --no-binary :all:
           cd pyonfx/libass && ./autogen.sh && ./configure && make
 
       # apply lints
