@@ -145,12 +145,13 @@ class Convert:
             raise ValueError("Color, Alpha, Color+Alpha as numeric or ASS expected")
 
     @staticmethod
-    def text_to_shape(obj, fscx=None, fscy=None):
+    def text_to_shape(line, obj, fscx=None, fscy=None):
         """Converts text with given style information to an ASS shape.
 
         **Tips:** *You can easily create impressive deforming effects.*
 
         Parameters:
+            line (Line): Line object
             obj (Line, Word, Syllable or Char): An object of class Line, Word, Syllable or Char.
             fscx (float, optional): The scale_x value for the shape.
             fscy (float, optional): The scale_y value for the shape.
@@ -176,7 +177,7 @@ class Convert:
             obj.styleref.scale_y = fscy
 
         # Obtaining font information from style and obtaining shape
-        shape = Font.text_to_shape(obj, obj.text)
+        shape = Font.text_to_shape(line, obj)
 
         # Restoring values of style and returning the shape converted
         if fscx is not None:
@@ -186,15 +187,16 @@ class Convert:
         return shape
 
     @staticmethod
-    def text_to_clip(obj, an=5, fscx=None, fscy=None):
+    def text_to_clip(line, obj, an=5, fscx=None, fscy=None):
         """Converts text with given style information to an ASS shape, applying some translation/scaling to it since
         it is not possible to position a shape with \\pos() once it is in a clip.
 
-        This is an high level function since it does some additional operations, check text_to_shape for further infromations.
+        This is an high level function since it does some additional operations, check text_to_shape for further information.
 
         **Tips:** *You can easily create text masks even for growing/shrinking text without too much effort.*
 
         Parameters:
+            line (Line): Line object
             obj (Line, Word, Syllable or Char): An object of class Line, Word, Syllable or Char.
             an (integer, optional): The alignment wanted for the shape.
             fscx (float, optional): The scale_x value for the shape.
@@ -221,7 +223,7 @@ class Convert:
             fscy = obj.styleref.scale_y
 
         # Obtaining text converted to shape
-        shape = Convert.text_to_shape(obj, fscx, fscy)
+        shape = Convert.text_to_shape(line, obj, fscx, fscy)
 
         # Setting mult_x based on alignment
         if an % 3 == 1:  # an=1 or an=4 or an=7
