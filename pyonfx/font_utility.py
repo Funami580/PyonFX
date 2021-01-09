@@ -19,7 +19,6 @@ This file contains the Font class definition, which has some functions
 to help getting informations from a specific font
 """
 import sys
-import math
 import bisect
 from .shape import Shape
 
@@ -195,11 +194,11 @@ class Font:
             return Shape("")
 
         glyphs = Font.glyph_data(line, text)
-        return Font.text_to_shape_by_glyphs(char_list, glyphs)
+        return Font.text_to_shape_by_glyphs(line, char_list, glyphs)
 
     @staticmethod
-    def text_to_shape_by_glyphs(char_list, glyph_list):
-        if not glyph_list:
+    def text_to_shape_by_glyphs(line, char_list, glyph_list):
+        if not glyph_list or not char_list:
             return Shape("")
 
         def to_shape(instr_list):
@@ -288,7 +287,7 @@ class Font:
 
             def map_shape(x, y):
                 return (x * scale_factor + char.left,
-                        y * scale_factor + char.middle)
+                        y * scale_factor + char.top + line.max_ascent)
 
             char_shape.map(map_shape)
             return repr(char_shape).split()

@@ -341,6 +341,8 @@ class Line:
         height (float): Line text height (*).
         ascent (float): Line font ascent (depends on text) (*).
         descent (float): Line font descent (depends on text) (*).
+        max_ascent (float): Maximum line font ascent (independent from text) (*).
+        max_descent (float): Maximum line font descent (independent from text) (*).
         x (float): Line text position horizontal (depends on alignment) (*).
         y (float): Line text position vertical (depends on alignment) (*).
         left (float): Line text position left (*).
@@ -375,6 +377,8 @@ class Line:
     height: float
     ascent: float
     descent: float
+    max_ascent: float
+    max_descent: float
     x: float
     y: float
     left: float
@@ -876,6 +880,7 @@ class Ass:
         # Line empty, returning...
         if not line.text.strip():
             line.ascent, line.descent = 0.0, 0.0
+            line.max_ascent, line.max_descent = 0.0, 0.0
 
             if x_axis == 0:  # left
                 line.left = line.center = line.right = margin_l
@@ -898,6 +903,7 @@ class Ass:
 
         # Set line metrics
         line.ascent, line.descent = Font.get_metrics_by_glyphs(glyphs)
+        line.max_ascent, line.max_descent = glyphs[0].ascender / SCALE_FACTOR, glyphs[0].descender / SCALE_FACTOR
 
         if extended:
             def get_pos_x(glyph_index):

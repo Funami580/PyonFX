@@ -2752,6 +2752,8 @@ struct GlyphData *ass_glyph_info(ASS_Renderer *priv, ASS_Track *track,
         glyphData[i].box_ymin = info->bbox.y_min;
         glyphData[i].box_xmax = info->bbox.x_max;
         glyphData[i].box_ymax = info->bbox.y_max;
+        glyphData[i].ascender = info->asc;
+        glyphData[i].descender = info->desc;
         glyphData[i].n_segments = info->outline->outline[0].n_segments;
         glyphData[i].n_points = info->outline->outline[0].n_points;
         glyphData[i].segments = info->outline->outline[0].segments;

@@ -500,6 +500,8 @@ class GlyphData(ctypes.Structure):
         ("box_ymin", ctypes.c_int),
         ("box_xmax", ctypes.c_int),
         ("box_ymax", ctypes.c_int),
+        ("ascender", ctypes.c_int),
+        ("descender", ctypes.c_int),
         ("n_segments", ctypes.c_size_t),
         ("n_points", ctypes.c_size_t),
         ("segments", ctypes.POINTER(ctypes.c_char)),
