@@ -832,11 +832,13 @@ class Ass:
 
         # Set line width and height
         line.width, line.height = Font.get_text_extents(line, line.text)
+        alignment = line.styleref.alignment
+        y_axis, x_axis = divmod(alignment - 1, 3)
+        margin_l = line.margin_l if line.margin_l != 0 else line.styleref.margin_l
+        margin_r = line.margin_r if line.margin_r != 0 else line.styleref.margin_r
+        margin_v = line.margin_v if line.margin_v != 0 else line.styleref.margin_v
 
         def set_alignment_pos(obj):
-            alignment = line.styleref.alignment
-            y_axis, x_axis = divmod(alignment - 1, 3)
-
             if x_axis == 0:  # left
                 obj.x = obj.left
             elif x_axis == 1:  # center
@@ -855,35 +857,36 @@ class Ass:
             else:
                 raise Exception
 
+        def set_y(obj):
+            if y_axis == 0:  # bottom
+                obj.bottom = meta.play_res_y - margin_v
+                obj.middle = obj.bottom - obj.styleref.fontsize / 2
+                obj.top = obj.bottom - obj.styleref.fontsize
+            elif y_axis == 1:  # middle
+                obj.middle = meta.play_res_y / 2
+                obj.top = obj.middle - obj.styleref.fontsize / 2
+                obj.bottom = obj.middle + obj.styleref.fontsize / 2
+            elif y_axis == 2:  # top
+                obj.top = margin_v
+                obj.middle = obj.top + obj.styleref.fontsize / 2
+                obj.bottom = obj.top + obj.styleref.fontsize
+            else:
+                raise Exception
+
         # Line empty, returning...
         if not line.text.strip():
             line.ascent, line.descent = 0.0, 0.0
 
-            alignment = line.styleref.alignment
-            y_axis, x_axis = divmod(alignment - 1, 3)
-
-            margin_l = line.margin_l if line.margin_l != 0 else line.styleref.margin_l
-            margin_r = line.margin_r if line.margin_r != 0 else line.styleref.margin_r
-            margin_v = line.margin_v if line.margin_v != 0 else line.styleref.margin_v
-
             if x_axis == 0:  # left
-                line.left = margin_l
+                line.left = line.center = line.right = margin_l
             elif x_axis == 1:  # center
-                line.center = meta.play_res_x / 2
+                line.left = line.center = line.right = meta.play_res_x / 2
             elif x_axis == 2:  # right
-                line.right = meta.play_res_x - margin_r
+                line.left = line.center = line.right = meta.play_res_x - margin_r
             else:
                 raise Exception
 
-            if y_axis == 0:  # bottom
-                line.bottom = meta.play_res_y - margin_v
-            elif y_axis == 1:  # middle
-                line.middle = meta.play_res_y / 2
-            elif y_axis == 2:  # top
-                line.top = margin_v
-            else:
-                raise Exception
-
+            set_y(line)
             set_alignment_pos(line)
             return
 
@@ -948,9 +951,7 @@ class Ass:
             obj.left = first_glyph.pos_x
             obj.center = first_glyph.pos_x + obj.width / 2
             obj.right = first_glyph.pos_x + obj.width
-            obj.top = first_glyph.pos_y - obj.styleref.fontsize / 2
-            obj.middle = first_glyph.pos_y
-            obj.bottom = first_glyph.pos_y + obj.styleref.fontsize / 2
+            set_y(obj)
             set_alignment_pos(obj)
 
         def apply_vertical(all_objs):
@@ -960,7 +961,6 @@ class Ass:
             if not all_objs:
                 return
 
-            x_axis = (line.styleref.alignment - 1) % 3
             max_width = max(x.width for x in all_objs)
             count_chars, count_borders = 0, 0
             first_char, last_char = None, None
