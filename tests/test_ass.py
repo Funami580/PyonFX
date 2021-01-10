@@ -65,6 +65,8 @@ def test_line_values():
     check.equal(lines[1].height, 26.15625)
     check.equal(lines[1].ascent, 25.8125)
     check.equal(lines[1].descent, 0.34375)
+    check.equal(lines[1].max_ascent, 36.984375)
+    check.equal(lines[1].max_descent, 11.015625)
     check.equal(lines[1].x, lines[1].center)
     check.equal(lines[1].y, lines[1].top)
     check.equal(lines[1].left, 420.8125)
