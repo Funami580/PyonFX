@@ -332,14 +332,13 @@ class Shape:
             bounds[1][jlen + 1] = y3
 
             def update_length(dict_obj, new_len):
-                new_dict, i = {}, 0
+                new_dict = {}
 
-                for key in sorted(dict_obj.keys()):
-                    new_dict[key] = dict_obj[key]
-                    i += 1
+                for i in range(new_len):
+                    if i not in dict_obj:
+                        continue
 
-                    if i == new_len:
-                        break
+                    new_dict[i] = dict_obj[i]
 
                 return new_dict
 
