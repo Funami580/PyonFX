@@ -2708,6 +2708,7 @@ ASS_Image *ass_render_frame(ASS_Renderer *priv, ASS_Track *track,
     return priv->images_root;
 }
 
+// PyonFX
 /**
  * \brief get glyph info from events
  * \param priv library handle
