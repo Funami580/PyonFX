@@ -301,9 +301,8 @@ class Font:
             char_shape = to_shape(instructions)
             _, y_min, _, y_max = char_shape.bounding_exact()
 
-            height = abs(y_max - y_min)  # Shape height
-            actual_height = abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR  # Char height
-            scale_factor = actual_height / height
+            shape_height = abs(y_max - y_min)
+            scale_factor = char.height / shape_height
 
             # Map shape to the needed position
             def map_shape(x, y):
