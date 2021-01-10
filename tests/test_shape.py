@@ -52,6 +52,11 @@ def test_bounding():
     assert original.bounding() == (0.0, 0.0, 20.0, 10.0)
 
 
+def test_bounding_exact():
+    original = Shape("m 313 312 b 255 275 482 38 277 212 l 436 269 b 378 388 461 671 260 481 235 431 118 430 160 282")
+    assert original.bounding_exact() == (150.98535796762013, 148.88438545593218, 436.0, 544.871772934194)
+
+
 def test_move():
     original = Shape("m -100.5 0 l 100 0 b 100 100 -100 100 -100.5 0 c")
     dest = Shape("m -95.5 -2 l 105 -2 b 105 98 -95 98 -95.5 -2 c")
