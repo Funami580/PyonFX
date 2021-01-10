@@ -152,11 +152,12 @@ class Font:
 
     @staticmethod
     def text_to_shape(line, text_obj):
-        if not text_obj:
+        if not text_obj or not text_obj.text.strip():
             return Shape("")
 
         from . import Line, Word, Syllable, Char
 
+        # List wrapper to use bisect
         class KeyList:
             def __init__(self, l, key):
                 self.l = l
@@ -168,11 +169,15 @@ class Font:
             def __getitem__(self, index):
                 return self.key(self.l[index])
 
+        # List with Char objects that are used by text_obj
         char_list = []
 
+        # Find chars that match the value
         def add_by_key(key, value):
+            # Find first index by binary search
             first_index = bisect.bisect_left(KeyList(line.chars, key=key), value)
 
+            # Find following matches
             for char in line.chars[first_index:]:
                 if key(char) == value:
                     char_list.append(char)
@@ -190,12 +195,7 @@ class Font:
         else:
             raise Exception("Expected Line, Word, Syllable or Char object, got %s." % type(text_obj))
 
-        text = "".join(map(lambda x: x.text, char_list))
-
-        if not text.strip():
-            return Shape("")
-
-        glyphs = Font.glyph_data(line, text)
+        glyphs = Font.glyph_data(line, text_obj.text)
         return Font.text_to_shape_by_glyphs(line, char_list, glyphs, text_obj)
 
     @staticmethod
@@ -203,14 +203,16 @@ class Font:
         if not glyph_list or not char_list:
             return Shape("")
 
+        # Create shape by a list of instructions where floats are automatically formatted
         def to_shape(instr_list):
             def map_shape(x):
-                if type(x) == str and x.isalpha():
+                if type(x) == str:
                     return x
                 else:
                     return Shape.format_value(x)
             return Shape(" ".join(map(map_shape, instr_list)))
 
+        # Returns the shape instructions of a single char
         def char_to_shape(char, glyph):
             segments_len = glyph.n_segments
             points_len = glyph.n_points
@@ -225,49 +227,63 @@ class Font:
             points = glyph.points
 
             segment_map = {
-                1: ("l", 1),
-                2: ("b", 2),
-                3: ("b", 3),
+                # key: (identifier, num_points)
+                1: ("l", 1),  # Line
+                2: ("b", 2),  # Quadratic bezier
+                3: ("b", 3),  # Cubic bezier
             }
 
             instructions = []
             last_identifier = "m"
-            contour_point = points[0]
+            contour_point = points[0]  # Always first point of a contour
             segment_index = 0
             point_index = 0
 
+            # Move to starting position
             instructions.extend([
                 "m",
                 points[0].x,
                 points[0].y,
             ])
 
+            # Run until there are no more points
             while point_index < points_len:
                 if segment_index >= segments_len:
                     raise Exception("Unexpected behaviour")
 
-                segment_key = ord(segments[segment_index])
-                segment = segment_key & 0b11
-                last_segment = segment_key & 0b100 != 0
-                identifier, num_points = segment_map[segment]
+                segment_key = ord(segments[segment_index])  # libass segment information
+                segment = segment_key & 0b11  # Segment type
+                last_segment = segment_key & 0b100 != 0  # Is it the last segment of the current contour?
+                identifier, num_points = segment_map[segment]  # Get information from segment type
+
+                # If it's the last segment of this contour, the last point should be the contour's starting point,
+                # otherwise it should be the first point of the next segment
                 last_point = points[point_index+num_points] if not last_segment else contour_point
 
+                # Avoid repetition of identifiers
                 if identifier != last_identifier:
                     instructions.append(identifier)
 
+                # Avoid repetition of positions, since the current point is already the cursor point
                 start_index = point_index + 1
 
+                # Quadratic bezier to cubic bezier (since only cubic beziers are possible)
+                # Will use the 1st control point (current cursor position) as the 2nd control point
                 if num_points == 2:
                     start_index -= 1
 
+                # Add needed points to the instruction list
                 for point in points[start_index:point_index+num_points] + [last_point]:
                     instructions.extend([
                         point.x,
                         point.y,
                     ])
 
+                # Update last_identifier
                 last_identifier = identifier
 
+                # If the contour ends here, and there is another contour, then
+                # update the contour_point and move the cursor to that point
                 if last_segment and point_index + num_points < points_len:
                     contour_point = points[point_index+num_points]
                     instructions.extend([
@@ -277,23 +293,29 @@ class Font:
                     ])
                     last_identifier = "m"
 
+                # Update the indexes
                 point_index += num_points
                 segment_index += 1
 
+            # Scale factor: in order that the shape has the correct height
             char_shape = to_shape(instructions)
             _, y_min, _, y_max = char_shape.bounding_exact()
 
-            height = abs(y_max - y_min)
-            actual_height = abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR
+            height = abs(y_max - y_min)  # Shape height
+            actual_height = abs(glyph.box_ymax - glyph.box_ymin) / SCALE_FACTOR  # Char height
             scale_factor = actual_height / height
 
+            # Map shape to the needed position
             def map_shape(x, y):
                 return (x * scale_factor + char.left - text_obj.left,
                         y * scale_factor + char.top + line.max_ascent - text_obj.top)
 
             char_shape.map(map_shape)
+
+            # Return instructions
             return repr(char_shape).split()
 
+        # Use char_to_shape to get the shape of the whole text
         all_instructions = []
 
         for char, glyph in zip(char_list, glyph_list):
