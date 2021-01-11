@@ -203,6 +203,11 @@ class Font:
         if not glyph_list or not char_list:
             return Shape("")
 
+        # Represents a point
+        class Point:
+            x: float
+            y: float
+
         # Create shape by a list of instructions where floats are automatically formatted
         def to_shape(instr_list):
             def map_shape(x):
@@ -267,13 +272,27 @@ class Font:
                 # Avoid repetition of positions, since the current point is already the cursor point
                 start_index = point_index + 1
 
+                # Points that will be added
+                needed_points = points[start_index:point_index + num_points] + [last_point]
+
                 # Quadratic bezier to cubic bezier (since only cubic beziers are possible)
-                # Will use the 1st control point (current cursor position) as the 2nd control point
                 if num_points == 2:
-                    start_index -= 1
+                    # From: https://stackoverflow.com/a/3162732
+                    quad_point0 = points[point_index]
+                    quad_point1, quad_point2 = needed_points
+
+                    cubic_point1 = Point()
+                    cubic_point1.x = quad_point0.x + 2 / 3 * (quad_point1.x - quad_point0.x)
+                    cubic_point1.y = quad_point0.y + 2 / 3 * (quad_point1.y - quad_point0.y)
+
+                    cubic_point2 = Point()
+                    cubic_point2.x = quad_point2.x + 2 / 3 * (quad_point1.x - quad_point2.x)
+                    cubic_point2.y = quad_point2.y + 2 / 3 * (quad_point1.y - quad_point2.y)
+
+                    needed_points = [cubic_point1, cubic_point2, quad_point2]
 
                 # Add needed points to the instruction list
-                for point in points[start_index:point_index+num_points] + [last_point]:
+                for point in needed_points:
                     instructions.extend([
                         point.x,
                         point.y,
