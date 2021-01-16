@@ -17,7 +17,19 @@
 
 import re
 import math
+import colorsys
+from enum import Enum
 from .font_utility import Font
+
+
+class ColorEnum(Enum):
+    ASS_BGR = 0,
+    ASS_ABGR = 1,
+    RGB_DEC = 2,
+    RGB_STR = 3,
+    RGBA_DEC = 4,
+    RGBA_STR = 5,
+    HSV_DEC = 6,
 
 
 class Convert:
@@ -58,91 +70,146 @@ class Convert:
             raise ValueError("Milliseconds or ASS timestamp expected")
 
     @staticmethod
-    def coloralpha(ass_r_a, g="", b="", a=""):
-        """Converts between rgb color &/+ alpha numeric and ASS color &/+ alpha.
+    def color(input, input_format: ColorEnum, output_format: ColorEnum, round_output=True):
+        assert type(input_format) == ColorEnum and type(output_format) == ColorEnum
+        assert type(round_output) == bool
 
-        - Passing a string to this function, you want a conversion from ASS color+alpha, ASS color or ASS alpha to integer values;
-        - Passing a single number, you want a conversion from ASS alpha value to ASS alpha string;
-        - Passing 3 or 4 numbers, you want a conversion from rgb (or rgba) values to ASS color (or ASS color+alpha) string.
+        r, g, b, a = None, None, None, None
 
-        Parameters:
-            ass_r_a (int or str): If a str is given, either an ASS color+alpha, ASS color, an ASS alpha string is expected; if an int is given, a value between 0 and 255 (inclusive) is expected.
-            g (int, optional): If given, a value between 0 and 255 (inclusive) is expected.
-            b (int, optional): If given, a value between 0 and 255 (inclusive) is expected.
-            a (int, optional): If given, a value between 0 and 255 (inclusive) is expected.
+        # Input parsing
+        if input_format == ColorEnum.ASS_BGR or input_format == ColorEnum.ASS_ABGR:
+            assert type(input) == str
+            assert input[0] == "&"
+            if input_format == ColorEnum.ASS_BGR:
+                assert input[-1] == "&"
+            assert input[1] == "H"
 
-        Returns:
-            According to the parameters, either a tuple containing rgb (or rgba) integer values or a str containing an ASS color+alpha, an ASS color or an ASS alpha.
+        if input_format == ColorEnum.RGB_DEC or input_format == ColorEnum.RGBA_DEC or input_format == ColorEnum.HSV_DEC:
+            assert type(input) == list or type(input) == tuple
+            assert all(type(n) == int or type(n) == float for n in input)
 
-        Examples:
-            ..  code-block:: python3
+        if input_format == ColorEnum.RGB_STR or input_format == ColorEnum.RGBA_STR:
+            assert type(input) == str
+            assert input[0] == "#"
 
-                print( Convert.coloralpha(0) )
-                print( Convert.coloralpha("&HFF&") )
+        if input_format == ColorEnum.ASS_BGR:
+            assert len(input) == len("&HBBGGRR&")
+            b = int(input[2:4], 16)
+            g = int(input[4:6], 16)
+            r = int(input[6:8], 16)
+            a = 255  # assume it is fully opaque
+        elif input_format == ColorEnum.ASS_ABGR:
+            assert len(input) == len("&HAABBGGRR")
+            a = int(input[2:4], 16)
+            b = int(input[4:6], 16)
+            g = int(input[6:8], 16)
+            r = int(input[8:10], 16)
+        elif input_format == ColorEnum.RGB_DEC:
+            assert len(input) == 3
+            assert all(0 <= n <= 255 for n in input)
+            r, g, b = input
+            a = 255  # assume it is fully opaque
+        elif input_format == ColorEnum.RGB_STR:
+            assert len(input) == len("#RRGGBB")
+            r = int(input[1:3], 16)
+            g = int(input[3:5], 16)
+            b = int(input[5:7], 16)
+            a = 255  # assume it is fully opaque
+        elif input_format == ColorEnum.RGBA_DEC:
+            assert len(input) == 4
+            assert all(0 <= n <= 255 for n in input)
+            r, g, b, a = input
+        elif input_format == ColorEnum.RGBA_STR:
+            assert len(input) == len("#RRGGBBAA")
+            r = int(input[1:3], 16)
+            g = int(input[3:5], 16)
+            b = int(input[5:7], 16)
+            a = int(input[7:9], 16)
+        elif input_format == ColorEnum.HSV_DEC:
+            assert len(input) == 3
+            assert 0 <= input[0] < 360 and 0 <= input[1] <= 100 and 0 <= input[2] <= 100
+            h, s, v = input[0] / 360, input[1] / 100, input[2] / 100
+            r, g, b = map(lambda x: 255 * x, colorsys.hsv_to_rgb(h, s, v))
+            a = 255  # assume it is fully opaque
 
-                print( Convert.coloralpha("&H0000FF&") )
-                print( Convert.coloralpha(255, 0, 0) )
+        # Return output
+        if input_format == output_format:
+            if type(input) == list:
+                return tuple(input)
+            return input
 
-                print( Convert.coloralpha("&HFF00FF00") )
-                print( Convert.coloralpha(0, 255, 0, 255) )
-
-            >>> &H00&
-            >>> 255
-            >>> (255, 0, 0)
-            >>> &H0000FF&
-            >>> (0, 255, 0, 255)
-            >>> &HFF00FF00
-        """
-        # Alpha / red numeric?
-        if (
-            (type(ass_r_a) == int or type(ass_r_a) == float)
-            and ass_r_a >= 0
-            and ass_r_a <= 255
-        ):
-            # Green + blue numeric?
-            if (
-                (type(g) == int or type(g) == float)
-                and g >= 0
-                and g <= 255
-                and (type(b) == int or type(b) == float)
-                and b >= 0
-                and b <= 255
-            ):
-                # Alpha numeric?
-                if (type(a) == int or type(a) == float) and a >= 0 and a <= 255:
-                    return f"&H{round(a):02X}{round(b):02X}{round(g):02X}{round(ass_r_a):02X}"
-                else:
-                    return f"&H{round(b):02X}{round(g):02X}{round(ass_r_a):02X}&"
-            elif not (g or b or a):
-                return f"&H{round(ass_r_a):02X}&"
+        if output_format == ColorEnum.ASS_BGR:
+            return f"&H{round(b):02X}{round(g):02X}{round(r):02X}&"
+        elif output_format == ColorEnum.ASS_ABGR:
+            return f"&H{round(a):02X}{round(b):02X}{round(g):02X}{round(r):02X}"
+        elif output_format == ColorEnum.RGB_DEC:
+            if round_output:
+                return round(r), round(g), round(b)
             else:
-                raise ValueError(
-                    "Bad usage. Either pass 1 value, 3 values, or 4 values."
-                )
-        # ASS value?
-        elif type(ass_r_a) == str:
-            # ASS alpha?
-            if re.match(r"^&H[0-9a-fA-F]{2}&$", ass_r_a):
-                return int(ass_r_a[2:4], 16)
-            # ASS color?
-            elif re.match(r"^&H[0-9a-fA-F]{6}&$", ass_r_a):
-                return (
-                    int(ass_r_a[6:8], 16),
-                    int(ass_r_a[4:6], 16),
-                    int(ass_r_a[2:4], 16),
-                )
-            # ASS color+alpha (from style definition)?
-            elif re.match(r"^&H[0-9a-fA-F]{8}$", ass_r_a):
-                return (
-                    int(ass_r_a[8:10], 16),
-                    int(ass_r_a[6:8], 16),
-                    int(ass_r_a[4:6], 16),
-                    int(ass_r_a[2:4], 16),
-                )
+                return float(r), float(g), float(b)
+        elif output_format == ColorEnum.RGB_STR:
+            return f"#{round(r):02X}{round(g):02X}{round(b):02X}"
+        elif output_format == ColorEnum.RGBA_DEC:
+            if round_output:
+                return round(r), round(g), round(b), round(a)
             else:
-                raise ValueError("Invalid ASS string")
-        else:
-            raise ValueError("Color, Alpha, Color+Alpha as numeric or ASS expected")
+                return float(r), float(g), float(b), float(a)
+        elif output_format == ColorEnum.RGBA_STR:
+            return f"#{round(r):02X}{round(g):02X}{round(b):02X}{round(a):02X}"
+        elif output_format == ColorEnum.HSV_DEC:
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            h, s, v = h * 360, s * 100, v * 100
+
+            if round_output:
+                return round(h), round(s), round(v)
+            else:
+                return float(h), float(s), float(v)
+
+    @staticmethod
+    def color_ass_alpha(input):
+        assert type(input) == str
+        assert input[0] == "&" and input[-1] == "&"
+        assert input[1] == "H"
+        assert len(input) == len("&HAA&")
+        return int(input[2:4], 16)
+
+    @staticmethod
+    def color_alpha_ass(input):
+        if type(input) == list or type(input) == tuple:
+            assert len(input) == 1
+            input = input[0]
+        assert type(input) == int or type(input) == float
+        assert 0 <= input <= 255
+        return f"&H{round(input):02X}&"
+
+    @staticmethod
+    def color_ass_rgb(input, as_str=False):
+        input_format = ColorEnum.ASS_ABGR if len(input) == len("&HAABBGGRR") else ColorEnum.ASS_BGR
+        return Convert.color(input, input_format, ColorEnum.RGB_STR if as_str else ColorEnum.RGB_DEC)
+
+    @staticmethod
+    def color_rgb_ass(input):
+        input_format = ColorEnum.RGB_STR if type(input) == str else ColorEnum.RGB_DEC
+        return Convert.color(input, input_format, ColorEnum.ASS_BGR)
+
+    @staticmethod
+    def color_ass_rgba(input, as_str=False):
+        input_format = ColorEnum.ASS_ABGR if len(input) == len("&HAABBGGRR") else ColorEnum.ASS_BGR
+        return Convert.color(input, input_format, ColorEnum.RGBA_STR if as_str else ColorEnum.RGBA_DEC)
+
+    @staticmethod
+    def color_rgba_ass(input):
+        input_format = ColorEnum.RGBA_STR if type(input) == str else ColorEnum.RGBA_DEC
+        return Convert.color(input, input_format, ColorEnum.ASS_ABGR)
+
+    @staticmethod
+    def color_ass_hsv(input):
+        input_format = ColorEnum.ASS_ABGR if len(input) == len("&HAABBGGRR") else ColorEnum.ASS_BGR
+        return Convert.color(input, input_format, ColorEnum.HSV_DEC)
+
+    @staticmethod
+    def color_hsv_ass(input):
+        return Convert.color(input, ColorEnum.HSV_DEC, ColorEnum.ASS_BGR)
 
     @staticmethod
     def text_to_shape(line, obj, fscx=None, fscy=None):

@@ -11,14 +11,17 @@ meta, styles, lines = io.get_data()
 
 
 def test_coloralpha():
-    assert Convert.coloralpha(255) == "&HFF&"
-    assert Convert.coloralpha("&HFF&") == 255
+    assert Convert.color_ass_alpha("&HFF&") == 255
+    assert Convert.color_alpha_ass(255) == "&HFF&"
 
-    assert Convert.coloralpha("&H0000FF&") == (255, 0, 0)
-    assert Convert.coloralpha(255, 0, 0) == "&H0000FF&"
+    assert Convert.color_ass_rgb("&H0000FF&") == (255, 0, 0)
+    assert Convert.color_rgb_ass((255, 0, 0)) == "&H0000FF&"
 
-    assert Convert.coloralpha("&HFF00FF00") == (0, 255, 0, 255)
-    assert Convert.coloralpha(0, 255, 0, 255) == "&HFF00FF00"
+    assert Convert.color_ass_rgba("&HFF00FF00") == (0, 255, 0, 255)
+    assert Convert.color_rgba_ass((0, 255, 0, 255)) == "&HFF00FF00"
+
+    assert Convert.color_ass_hsv("&H0000FF&") == (0, 100, 100)
+    assert Convert.color_hsv_ass((0, 100, 100)) == "&H0000FF&"
 
 
 def test_text_to_shape():
