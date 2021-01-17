@@ -161,7 +161,7 @@ class Convert:
             h, s, v = h * 360, s * 100, v * 100
 
             if round_output:
-                return round(h), round(s), round(v)
+                return round(h) % 360, round(s), round(v)
             else:
                 return float(h), float(s), float(v)
 
