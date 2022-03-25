@@ -12,7 +12,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.10']
 
     steps:
       - uses: actions/checkout@v2
@@ -50,8 +50,8 @@ jobs:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.10']
 
     steps:
       - uses: actions/checkout@v2
@@ -65,10 +65,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0 python3-gi python3-gi-cairo
+          sudo apt-get install python3-cairo python3-gi pango1.0
       - name: Install platform-specific requirements (macOS) # Note: brew is very slow sometimes. TODO: speedup brew by using caching.
         if: matrix.os == 'macos-latest'
-        run: brew install pygobject3 gtk+3 cairo py3cairo pkg-config
+        run: brew install py3cairo pygobject3 pango
 
       - name: Install fonts (non-Windows)
         if: matrix.os != 'windows-latest'
